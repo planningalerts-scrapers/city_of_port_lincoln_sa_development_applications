@@ -20,7 +20,6 @@ sqlite3.verbose();
 const DevelopmentApplicationsUrl = "https://www.portlincoln.sa.gov.au/DevelopmentRegister";
 const CommentUrl = "mailto:plcc@plcc.sa.gov.au";
 
-declare const global: any;
 declare const process: any;
 
 // All valid street and suburb names.
@@ -208,10 +207,7 @@ function readAddressInformation() {
     }
 }
 
-// Gets the elements on the line above (typically an address line).  Note that the left hand side
-// of the leftElement is used to limit how far left the search for elements is performed (and so
-// avoids artefacts created at the very left hand side edge of the page being included as valid
-// text, such as "|" in the November 2016 PDF on page 16).
+// Gets the elements on the line above (typically an address line).
 
 function getAboveElements(elements: Element[], leftElement: Element, belowElement: Element, middleElement: Element) {
     // Find the elements above (at least a "line" above) the specified belowElement and to the
@@ -247,21 +243,9 @@ function getAboveElements(elements: Element[], leftElement: Element, belowElemen
     let elementComparer = (a, b) => (a.y > b.y + Math.max(a.height, b.height)) ? 1 : ((a.y < b.y - Math.max(a.height, b.height)) ? -1 : ((a.x > b.x) ? 1 : ((a.x < b.x) ? -1 : 0)));
     addressElements.sort(elementComparer);
 
-    // Remove any smaller elements (say less than half the area) that are 90% or more encompassed
-    // by another element (this then avoids some artefacts of the text recognition, ie. elements
-    // such as "r~" and "-" that can otherwise overlap the main text).
-
-    addressElements = addressElements.filter(element =>
-        !addressElements.some(otherElement =>
-            getArea(otherElement) > 2 * getArea(element) &&  // smaller element (ie. the other element is at least double the area)
-            getArea(element) > 0 &&
-            getArea(intersect(element, otherElement)) / getArea(element) > 0.9
-        )
-    );
-
     // Remove any address elements that occur after a sizeable gap.  Any such elements are very
     // likely part of the description (not the address) because sometimes the description is
-    // moved to the left, closer to the address (see "Crystal Report - DevAppSeptember 2015.pdf").
+    // moved to the left, closer to the address.
 
     for (let index = 1; index < addressElements.length; index++) {
         if (addressElements[index].x - (addressElements[index - 1].x + addressElements[index - 1].width) > 50) {  // gap greater than 50 pixels
@@ -588,11 +572,8 @@ async function parsePdf(url: string) {
 
     // Parse the PDF.  Each page has the details of multiple applications.
 
-    for (let pageIndex = 0; pageIndex < 500; pageIndex++) {  // limit to an arbitrarily large number of pages (to avoid any chance of an infinite loop)
-        let pdf = await pdfjs.getDocument({ data: buffer, disableFontFace: true, ignoreErrors: true });
-        if (pageIndex >= pdf.numPages)
-            break;
-
+    let pdf = await pdfjs.getDocument({ data: buffer, disableFontFace: true, ignoreErrors: true });
+    for (let pageIndex = 0; pageIndex < pdf.numPages; pageIndex++) {
         console.log(`Reading and parsing applications from page ${pageIndex + 1} of ${pdf.numPages}.`);
         let page = await pdf.getPage(pageIndex + 1);
         let viewport = await page.getViewport(1.0);
@@ -731,7 +712,6 @@ async function main() {
     let pdfUrls: string[] = [];
     for (let element of $("td.uContentListDesc a[href$='.pdf']").get()) {
         let pdfUrl = new urlparser.URL(element.attribs.href, DevelopmentApplicationsUrl);
-        pdfUrl.protocol = "http";  // force to use HTTP instead of HTTPS
         if (!pdfUrls.some(url => url === pdfUrl.href))  // avoid duplicates
             pdfUrls.push(pdfUrl.href);
     }
@@ -756,13 +736,6 @@ async function main() {
         console.log(`Parsing document: ${pdfUrl}`);
         let developmentApplications = await parsePdf(pdfUrl);
         console.log(`Parsed ${developmentApplications.length} development application(s) from document: ${pdfUrl}`);
-
-        // Attempt to avoid reaching 512 MB memory usage (this will otherwise result in the
-        // current process being terminated by morph.io).
-
-        if (global.gc)
-            global.gc();
-
         console.log(`Inserting development applications into the database.`);
         for (let developmentApplication of developmentApplications)
             await insertRow(database, developmentApplication);
