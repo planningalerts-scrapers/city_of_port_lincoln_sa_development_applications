@@ -311,8 +311,6 @@ function findStartElements(elements: Element[]) {
         do {
             rightElements.push(rightElement);
         
-            // Allow for common misspellings of the "no." text.
-
             let text = rightElements.map(element => element.text).join("").replace(/\s/g, "").toLowerCase();
             if (text.length >= 15)  // stop once the text is too long
                 break;
