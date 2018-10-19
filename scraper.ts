@@ -271,7 +271,7 @@ function parseApplicationElements(elements: Element[], startElement: Element, in
     else
         suburbName += " SA 5606";
 
-    address += ((address === "") ? "" : ", ") + suburbName.replace(/ STAGE ONE/g, "").replace(/ LINCOLN COVEüLINCO$/g, " LINCOLN COVE");
+    address += ((address === "") ? "" : ", ") + suburbName.replace(/ STAGE ONE/g, "").replace(/LINCOLN COVEüLINCO /g, "LINCOLN COVE ").replace(/PORT LINCOLNüPORT LINCOLN /g, "PORT LINCOLN ");
     address = address.replace(/ü/g, " ").trim();
 
     // Get the description.
@@ -473,14 +473,12 @@ async function main() {
     // at once because this may use too much memory, resulting in morph.io terminating the current
     // process).
 
-    let selectedPdfUrls = pdfUrls;
-
-    // let selectedPdfUrls: string[] = [];
-    // selectedPdfUrls.push(pdfUrls.shift());
-    // if (pdfUrls.length > 0)
-    //     selectedPdfUrls.push(pdfUrls[getRandom(1, pdfUrls.length)]);
-    // if (getRandom(0, 2) === 0)
-    //     selectedPdfUrls.reverse();
+    let selectedPdfUrls: string[] = [];
+    selectedPdfUrls.push(pdfUrls.shift());
+    if (pdfUrls.length > 0)
+        selectedPdfUrls.push(pdfUrls[getRandom(1, pdfUrls.length)]);
+    if (getRandom(0, 2) === 0)
+        selectedPdfUrls.reverse();
 
     for (let pdfUrl of selectedPdfUrls) {
         console.log(`Parsing document: ${pdfUrl}`);
