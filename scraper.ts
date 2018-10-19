@@ -279,7 +279,7 @@ function parseApplicationElements(elements: Element[], startElement: Element, in
     let description = getDownText(elements, "Development Description", "Relevant Authority", "Private Certifier Name");
 
     // Construct the resulting application information.
-    
+
     return {
         applicationNumber: applicationNumber,
         address: address,
@@ -353,7 +353,21 @@ async function parsePdf(url: string) {
 
     // Read the PDF.
 
-    let buffer = await request({ url: url, encoding: null, proxy: process.env.MORPH_PROXY });
+    let buffer = await request({
+        url: url,
+        encoding: null,
+        proxy: process.env.MORPH_PROXY,
+        strictSSL: false,
+        headers: {
+            "Accept": "text/html, application/xhtml+xml, application/xml; q=0.9, */*; q=0.8",
+            "Accept-Encoding": "",
+            "Accept-Language": "en-US, en; q=0.5",
+            "Connection": "Keep-Alive",
+            "Host": "www.portlincoln.sa.gov.au",
+            "Upgrade-Insecure-Requests": "1",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36 Edge/17.17134"
+        }
+    });
     await sleep(2000 + getRandom(0, 5) * 1000);
 
     // Parse the PDF.  Each page has the details of multiple applications.
@@ -453,7 +467,20 @@ async function main() {
 
     console.log(`Retrieving page: ${DevelopmentApplicationsUrl}`);
 
-    let body = await request({ url: DevelopmentApplicationsUrl, proxy: process.env.MORPH_PROXY });
+    let body = await request({
+        url: DevelopmentApplicationsUrl,
+        proxy: process.env.MORPH_PROXY,
+        strictSSL: false,
+        headers: {
+            "Accept": "text/html, application/xhtml+xml, application/xml; q=0.9, */*; q=0.8",
+            "Accept-Encoding": "",
+            "Accept-Language": "en-US, en; q=0.5",
+            "Connection": "Keep-Alive",
+            "Host": "www.portlincoln.sa.gov.au",
+            "Upgrade-Insecure-Requests": "1",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36 Edge/17.17134"
+        }
+    });
     await sleep(2000 + getRandom(0, 5) * 1000);
     let $ = cheerio.load(body);
     
