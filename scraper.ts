@@ -319,9 +319,9 @@ function findStartElements(elements: Element[]) {
             if (text.length >= 10) {  // ignore until the text is close to long enough
                 if (text === "applicationno")
                     matches.push({ element: rightElement, threshold: 0 });
-                else if (didyoumean(text, [ "ApplicationNo", "ApplicationNo" ], { caseSensitive: false, returnType: "first-closest-match", thresholdType: "edit-distance", threshold: 1, trimSpace: true }) !== null)
+                else if (didyoumean(text, [ "ApplicationNo" ], { caseSensitive: false, returnType: "first-closest-match", thresholdType: "edit-distance", threshold: 1, trimSpace: true }) !== null)
                     matches.push({ element: rightElement, threshold: 1 });
-                else if (didyoumean(text, [ "ApplicationNo", "ApplicationNo" ], { caseSensitive: false, returnType: "first-closest-match", thresholdType: "edit-distance", threshold: 2, trimSpace: true }) !== null)
+                else if (didyoumean(text, [ "ApplicationNo" ], { caseSensitive: false, returnType: "first-closest-match", thresholdType: "edit-distance", threshold: 2, trimSpace: true }) !== null)
                     matches.push({ element: rightElement, threshold: 2 });
             }
 
