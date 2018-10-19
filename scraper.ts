@@ -16,7 +16,7 @@ import * as didyoumean from "didyoumean2";
 
 sqlite3.verbose();
 
-const DevelopmentApplicationsUrl = "https://www.portlincoln.sa.gov.au/DevelopmentRegister";
+const DevelopmentApplicationsUrl = "http://www.portlincoln.sa.gov.au/DevelopmentRegister";
 const CommentUrl = "mailto:plcc@plcc.sa.gov.au";
 
 declare const process: any;
