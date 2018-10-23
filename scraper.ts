@@ -244,7 +244,7 @@ function parseApplicationElements(elements: Element[], startElement: Element, in
 
     // Get the received date.
 
-    let receivedDateText = getRightText(elements, "Application Date", "Planning Approval", "Application received");
+    let receivedDateText = getRightText(elements, "Application received", "Planning Approval", "Building Application");
     let receivedDate: moment.Moment = undefined;
     if (receivedDateText !== undefined)
         receivedDate = moment(receivedDateText.trim(), "D/MM/YYYY", true);
