@@ -16,7 +16,7 @@ import * as didyoumean from "didyoumean2";
 
 sqlite3.verbose();
 
-const DevelopmentApplicationsUrl = "https://www.portlincoln.sa.gov.au/DevelopmentRegister";
+const DevelopmentApplicationsUrl = "https://www.portlincoln.sa.gov.au/service-and-facilities/development/developmentregister?result_57806_result_page={0}";
 const CommentUrl = "mailto:plcc@plcc.sa.gov.au";
 
 declare const process: any;
@@ -51,7 +51,7 @@ async function insertRow(database, developmentApplication) {
                 console.error(error);
                 reject(error);
             } else {
-                console.log(`    Saved: application \"${developmentApplication.applicationNumber}\" with address \"${developmentApplication.address}\", description \"${developmentApplication.description}\" and received date \"${developmentApplication.receivedDate}\" into the database.`);
+                console.log(`    Saved application \"${developmentApplication.applicationNumber}\" with address \"${developmentApplication.address}\", description \"${developmentApplication.description}\" and received date \"${developmentApplication.receivedDate}\" to the database.`);
                 sqlStatement.finalize();  // releases any locks
                 resolve(row);
             }
@@ -280,7 +280,7 @@ function parseApplicationElements(elements: Element[], startElement: Element, in
     return {
         applicationNumber: applicationNumber,
         address: address,
-        description: ((description === "") ? "NO DESCRIPTION PROVIDED" : description),
+        description: ((description !== undefined && description.trim() !== "") ? description : "NO DESCRIPTION PROVIDED"),
         informationUrl: informationUrl,
         commentUrl: CommentUrl,
         scrapeDate: moment().format("YYYY-MM-DD"),
@@ -328,8 +328,8 @@ function findStartElements(elements: Element[]) {
         if (matches.length > 0) {
             let bestMatch = matches.reduce((previous, current) =>
                 (previous === undefined ||
-                previous.threshold < current.threshold ||
-                (previous.threshold === current.threshold && Math.abs(previous.text.length - "ApplicationNo".length) <= Math.abs(current.text.length - "ApplicationNo".length)) ? current : previous), undefined);
+                current.threshold < previous.threshold ||
+                (current.threshold === previous.threshold && Math.abs(current.text.trim().length - "ApplicationNo".length) <= Math.abs(previous.text.trim().length - "ApplicationNo".length)) ? current : previous), undefined);
             startElements.push(bestMatch.element);
         }
     }
@@ -444,25 +444,31 @@ async function main() {
 
     let database = await initializeDatabase();
 
-    // Retrieve the page that contains the links to the PDFs.
+    // Retrieve the pages that contain the links to the PDFs.
 
-    console.log(`Retrieving page: ${DevelopmentApplicationsUrl}`);
-
-    let body = await request({ url: DevelopmentApplicationsUrl, proxy: process.env.MORPH_PROXY });
-    await sleep(2000 + getRandom(0, 5) * 1000);
-    let $ = cheerio.load(body);
-    
     let pdfUrls: string[] = [];
-    for (let element of $("td.uContentListDesc a[href$='.pdf']").get()) {
-        let pdfUrl = new urlparser.URL(element.attribs.href, DevelopmentApplicationsUrl);
-        if (!pdfUrls.some(url => url === pdfUrl.href))  // avoid duplicates
-            pdfUrls.push(pdfUrl.href);
+
+    for (let index = 1; index <= 10; index++) {  // search up to 10 pages
+        let url = DevelopmentApplicationsUrl.replace(/\{0\}/g, index.toString());
+        console.log(`Retrieving page: ${url}`);
+
+        let body = await request({ url: url, proxy: process.env.MORPH_PROXY });
+        await sleep(2000 + getRandom(0, 5) * 1000);
+        let $ = cheerio.load(body);
+        
+        for (let element of $("h3.generic-list__title a").get()) {
+            let pdfUrl = new urlparser.URL(element.attribs.href, DevelopmentApplicationsUrl);
+            if (pdfUrl.href.toLowerCase().includes(".pdf"))
+                if (!pdfUrls.some(url => url === pdfUrl.href))  // avoid duplicates
+                    pdfUrls.push(pdfUrl.href);
+        }
     }
 
     if (pdfUrls.length === 0) {
-        console.log("No PDF URLs were found on the page.");
+        console.log("No PDF URLs were found on the pages.");
         return;
     }
+    console.log(`Found ${pdfUrls.length} PDF URL(s) on the pages.`);
 
     // Select the most recent PDF.  And randomly select one other PDF (avoid processing all PDFs
     // at once because this may use too much memory, resulting in morph.io terminating the current
@@ -471,7 +477,7 @@ async function main() {
     let selectedPdfUrls: string[] = [];
     selectedPdfUrls.push(pdfUrls.shift());
     if (pdfUrls.length > 0)
-        selectedPdfUrls.push(pdfUrls[getRandom(1, pdfUrls.length)]);
+        selectedPdfUrls.push(pdfUrls[getRandom(0, pdfUrls.length)]);
     if (getRandom(0, 2) === 0)
         selectedPdfUrls.reverse();
 
