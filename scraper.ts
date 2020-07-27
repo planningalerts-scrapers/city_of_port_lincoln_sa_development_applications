@@ -449,12 +449,13 @@ async function main() {
 
     // Retrieve the pages that contain the links to the PDFs.
 
-    console.log(`Retrieving pages: ${DevelopmentApplicationsUrl}`);
-
     let pdfUrls: string[] = [];
 
     for (let index = 1; index <= 10; index++) {  // search up to 10 pages
-        let body = await request({ url: DevelopmentApplicationsUrl.replace(/\{0\}/g, index.toString()), proxy: process.env.MORPH_PROXY });
+        let url = DevelopmentApplicationsUrl.replace(/\{0\}/g, index.toString());
+        console.log(`Retrieving page: ${url}`);
+
+        let body = await request({ url: url, proxy: process.env.MORPH_PROXY });
         await sleep(2000 + getRandom(0, 5) * 1000);
         let $ = cheerio.load(body);
         
