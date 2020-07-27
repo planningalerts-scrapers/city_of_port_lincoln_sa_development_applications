@@ -16,7 +16,7 @@ import * as didyoumean from "didyoumean2";
 
 sqlite3.verbose();
 
-const DevelopmentApplicationsUrl = "https://www.portlincoln.sa.gov.au/DevelopmentRegister";
+const DevelopmentApplicationsUrl = "https://www.portlincoln.sa.gov.au/service-and-facilities/development/developmentregister?result_57806_result_page={0}";
 const CommentUrl = "mailto:plcc@plcc.sa.gov.au";
 
 declare const process: any;
@@ -447,24 +447,27 @@ async function main() {
 
     let database = await initializeDatabase();
 
-    // Retrieve the page that contains the links to the PDFs.
+    // Retrieve the pages that contain the links to the PDFs.
 
-    console.log(`Retrieving page: ${DevelopmentApplicationsUrl}`);
+    console.log(`Retrieving pages: ${DevelopmentApplicationsUrl}`);
 
-    let body = await request({ url: DevelopmentApplicationsUrl, proxy: process.env.MORPH_PROXY });
-    await sleep(2000 + getRandom(0, 5) * 1000);
-    let $ = cheerio.load(body);
-    
     let pdfUrls: string[] = [];
-    for (let element of $("td.uContentListDesc a").get()) {
-        let pdfUrl = new urlparser.URL(element.attribs.href, DevelopmentApplicationsUrl);
-        if (pdfUrl.href.toLowerCase().includes(".pdf"))
-            if (!pdfUrls.some(url => url === pdfUrl.href))  // avoid duplicates
-                pdfUrls.push(pdfUrl.href);
+
+    for (let index = 1; index <= 10; index++) {  // search up to 10 pages
+        let body = await request({ url: DevelopmentApplicationsUrl.replace(/\{0\}/g, index.toString()), proxy: process.env.MORPH_PROXY });
+        await sleep(2000 + getRandom(0, 5) * 1000);
+        let $ = cheerio.load(body);
+        
+        for (let element of $("h3.generic-list__title a").get()) {
+            let pdfUrl = new urlparser.URL(element.attribs.href, DevelopmentApplicationsUrl);
+            if (pdfUrl.href.toLowerCase().includes(".pdf"))
+                if (!pdfUrls.some(url => url === pdfUrl.href))  // avoid duplicates
+                    pdfUrls.push(pdfUrl.href);
+        }
     }
 
     if (pdfUrls.length === 0) {
-        console.log("No PDF URLs were found on the page.");
+        console.log("No PDF URLs were found on the pages.");
         return;
     }
 
