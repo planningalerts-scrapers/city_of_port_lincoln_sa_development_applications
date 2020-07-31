@@ -313,11 +313,11 @@ function findStartElements(elements: Element[]) {
                 break;
             if (text.length >= 10) {  // ignore until the text is close to long enough
                 if (text === "applicationno")
-                    matches.push({ element: rightElement, threshold: 0 });
+                    matches.push({ element: rightElement, threshold: 0, text: text });
                 else if (didyoumean(text, [ "ApplicationNo" ], { caseSensitive: false, returnType: "first-closest-match", thresholdType: "edit-distance", threshold: 1, trimSpace: true }) !== null)
-                    matches.push({ element: rightElement, threshold: 1 });
+                    matches.push({ element: rightElement, threshold: 1, text: text });
                 else if (didyoumean(text, [ "ApplicationNo" ], { caseSensitive: false, returnType: "first-closest-match", thresholdType: "edit-distance", threshold: 2, trimSpace: true }) !== null)
-                    matches.push({ element: rightElement, threshold: 2 });
+                    matches.push({ element: rightElement, threshold: 2, text: text });
             }
 
             rightElement = getRightElement(elements, rightElement);
